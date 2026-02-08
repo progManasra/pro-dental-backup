@@ -1,0 +1,53 @@
+# This Kubernetes manifest defines a Deployment and a Service for the backend application of the ProDental project. The Deployment specifies that one replica of the backend application should be run, using a Docker image from an Azure Container Registry. The container exposes port 8091 and uses environment variables to connect to a MySQL database, with credentials stored in a Kubernetes Secret. The Service exposes the backend application on port 80, forwarding traffic to port 8091 on the backend pods.
+apiVersion: apps/v1   # API version for Deployment
+kind: Deployment  # Type of Kubernetes object
+metadata: 
+  name: backend
+  namespace: prodental
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: acrprodentaldev.azurecr.io/prodental-backend:1.0
+          ports:
+            - containerPort: 8091
+          env:
+            - name: MYSQL_HOST
+              value: mysql
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_DB
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets
+                  key: MYSQL_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: prodental
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 80
+      targetPort: 8091

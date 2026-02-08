@@ -1,0 +1,46 @@
+# This Kubernetes Job is responsible for seeding the MySQL database with initial data. It runs a MySQL client container that waits for the MySQL server to be ready, then executes the SQL commands from the seed.sql file to populate the database. The Job uses environment variables to get the MySQL credentials from a Kubernetes Secret and mounts a ConfigMap containing the seed.sql file as a volume.
+apiVersion: batch/v1      # API version for Kubernetes Job
+kind: Job       # Type of Kubernetes object
+metadata:   
+  name: db-seed       # Name of the Job
+  namespace: prodental  # Namespace where the Job will be created
+spec:
+  backoffLimit: 3   # Number of retries before marking the Job as failed
+  template: 
+    spec:
+      restartPolicy: Never  # Do not restart the Job's pod on failure
+      containers:
+        - name: seed    # Name of the container
+          image: mysql:8.0     # Docker image for MySQL client
+          env: 
+            - name: MYSQL_ROOT_PASSWORD       
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets         # Name of the Secret containing MySQL credentials 
+                  key: MYSQL_ROOT_PASSWORD    # Key in the Secret for MySQL root password
+            - name: MYSQL_DATABASE        
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets    # Name of the Secret containing MySQL credentials
+                  key: MYSQL_DATABASE       # Key in the Secret for MySQL database name 
+          command: ["/bin/bash","-lc"]      # Command to run in the container
+          args:         
+            - |
+              echo "Waiting for MySQL..."
+              until mysql -h mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; do
+                sleep 2
+              done
+              echo "MySQL is up. Restoring DB..."
+              mysql --binary-mode=1 -h mysql -uroot -p"$MYSQL_ROOT_PASSWORD" < /seed/prodental.sql
+
+              echo "Done."          
+          volumeMounts:
+            - name: seed-sql  # Name of the volume to mount
+              mountPath: /seed  # Path inside the container where the volume will be mounted
+      volumes:
+        - name: seed-sql        # Name of the volume to be used in the pod
+          configMap: 
+            name: prodental-sql    # Name of the ConfigMap containing the seed.sql file 
+
+
+#         mysql -h mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /seed/prodental.sql

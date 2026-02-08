@@ -1,0 +1,36 @@
+{
+  "name": "prodental-backend",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "cli": "node src/cli/index.js",
+    "pd": "node scripts/cli.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:int:db": "cross-env MYSQL_HOST=127.0.0.1 MYSQL_PORT=3308 MYSQL_DB=prodental_test node test/setupTestDb.js",
+    "test:int": "npm run test:int:db && cross-env MYSQL_HOST=127.0.0.1 MYSQL_PORT=3308 MYSQL_DB=prodental_test jest --runInBand --testPathPattern=src/integration",
+    "test:int:cov": "npm run test:int:db && cross-env MYSQL_DB=prodental_test jest --runInBand --testPathPattern=src/integration --coverage"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "commander": "^12.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.0",
+    "pino": "^9.3.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2"
+  }
+}

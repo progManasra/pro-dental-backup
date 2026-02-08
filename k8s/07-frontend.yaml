@@ -1,0 +1,34 @@
+# This Kubernetes manifest defines a Deployment and a Service for the frontend application of the ProDental project. The Deployment specifies that one replica of the frontend container should be running, using an image from Azure Container Registry. The Service exposes the frontend application on port 80 and uses a LoadBalancer to allow external access. 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: prodental
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: acrprodentaldev.azurecr.io/prodental-frontend:1.0
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: prodental
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80

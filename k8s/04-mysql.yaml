@@ -1,0 +1,60 @@
+apiVersion: apps/v1 # API version for Deployment
+kind: Deployment # Type of Kubernetes object
+metadata: 
+  name: mysql # Name of the Deployment
+  namespace: prodental  # Namespace where the Deployment will be created
+spec:
+  replicas: 1     # Number of desired pods
+  selector:       # Label selector to identify pods managed by this Deployment
+    matchLabels:
+      app: mysql # Label to match pods
+  template:
+    metadata:   
+      labels:
+        app: mysql  # Label for the pod template
+    spec:
+      containers:
+        - name: mysql     # Name of the container
+          image: mysql:8.0      # Docker image for MySQL
+          ports:
+            - containerPort: 3306         # Port exposed by the container
+          env:
+            - name: MYSQL_ROOT_PASSWORD                 
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets       # Name of the Secret containing MySQL credentials
+                  key: MYSQL_ROOT_PASSWORD    # Key in the Secret for MySQL root password
+            - name: MYSQL_DATABASE  # Environment variable for MySQL database name
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets    # Name of the Secret containing MySQL credentials
+                  key: MYSQL_DATABASE  # Key in the Secret for MySQL database name
+            - name: MYSQL_USER  # Environment variable for MySQL username 
+              valueFrom:
+                secretKeyRef:
+                  name: prodental-secrets     # Name of the Secret containing MySQL credentials
+                  key: MYSQL_USER     # Key in the Secret for MySQL username
+            - name: MYSQL_PASSWORD    # Environment variable for MySQL password
+              valueFrom:  
+                secretKeyRef:
+                  name: prodental-secrets   # Name of the Secret containing MySQL credentials
+                  key: MYSQL_PASSWORD  # Key in the Secret for MySQL password
+          volumeMounts:
+            - name: mysql-data    # Name of the volume to mount
+              mountPath: /var/lib/mysql       # Path inside the container where the volume will be mounted
+      volumes: 
+        - name: mysql-data  # Name of the volume to be used in the pod
+          persistentVolumeClaim: 
+            claimName: mysql-pvc        # Name of the PersistentVolumeClaim to use for MySQL data storage
+---
+apiVersion: v1        # API version for Service
+kind: Service       # Type of Kubernetes object
+metadata: 
+  name: mysql # Name of the Service
+  namespace: prodental # Namespace where the Service will be created
+spec: 
+  selector:
+    app: mysql  # Label selector to identify pods targeted by this Service
+  ports:
+    - port: 3306       # Port exposed by the Service
+      targetPort: 3306     # Port on the pod to which the Service will forward traffic

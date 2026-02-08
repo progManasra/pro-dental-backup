@@ -1,0 +1,41 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: prodental
+      MYSQL_USER: prodental
+      MYSQL_PASSWORD: prodental_pw
+      MYSQL_ROOT_PASSWORD: root_pw
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
+
+  phpmyadmin:
+    image: phpmyadmin
+    environment:
+      PMA_HOST: mysql
+    ports:
+      - "8087:80"
+    depends_on:
+      - mysql
+
+  backend:
+    build: ./backend
+    env_file: .env
+    ports:
+      - "8091:8091"
+    depends_on:
+      - mysql
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8099:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
